@@ -33,7 +33,7 @@ for reg in registers_x64+registers_sse+register_rip: # We do not support avx/avx
 
 clobbers = []
 for reg in registers_x64 + registers_sse:
-    if reg[0] in ("rsp", "rflags", "rip"):
+    if reg[0] in ("rsp", "rflags", "rbp"):
         continue
     clobbers.append(f'"{reg[0]}"')
 clobbers.append('"cc"')
@@ -61,12 +61,12 @@ def createProxyFunction(functionName):
             cmd = "movups"
         if "rflags" in reg[0]:
             save_registers += '         "pushfq\\n\\t"\n'
-            save_registers += f'         "pop qword ptr [reg_vals+{i}]\\n\\t"\n'
-            load_registers += f'         "push qword ptr [reg_vals+{i}]\\n\\t"\n'
+            save_registers += f'         "pop qword ptr [rip+reg_vals+{i}]\\n\\t"\n'
+            load_registers += f'         "push qword ptr [rip+reg_vals+{i}]\\n\\t"\n'
             load_registers += '         "popfq\\n\\t"\n'
         else:
-            save_registers += f'        "{cmd} [reg_vals+{i}], {reg[0]}\\n\\t"\n'
-            load_registers += f'        "{cmd} {reg[0]}, [reg_vals+{i}]\\n\\t"\n'
+            save_registers += f'        "{cmd} [rip+reg_vals+{i}], {reg[0]}\\n\\t"\n'
+            load_registers += f'        "{cmd} {reg[0]}, [rip+reg_vals+{i}]\\n\\t"\n'
         i += reg[1]
     return f"""
 void __attribute__((naked)) {functionName}() {{
@@ -77,18 +77,18 @@ void __attribute__((naked)) {functionName}() {{
         "call {functionName}_Pre\\n\\t"
         "add rsp, 8\\n\\t"
         "mov rax, [rsp]\\n\\t" // load rax to our ret rip(the original caller)
-        "mov [reg_vals+{i}], rax\\n\\t" // save said rip
+        "mov [rip+reg_vals+{i}], rax\\n\\t" // save said rip
         "lea rax, [rip+after_call_{functionName}]\\n\\t" // get our current location
         "mov [rsp], rax\\n\\t"
 {load_registers}
-        "jmp [{functionName}_addr]\\n\\t"
+        "jmp [rip+{functionName}_addr]\\n\\t"
         "after_call_{functionName}:\\n\\t"
 {save_registers}
         "sub rsp, 8\\n\\t"
         "call {functionName}_Post\\n\\t"
         "add rsp, 8\\n\\t"
 {load_registers}
-        "jmp [reg_vals+{i}]\\n\\t"
+        "jmp [rip+reg_vals+{i}]\\n\\t"
         ".att_syntax prefix\\n\\t"
         :
         :
