@@ -1,7 +1,7 @@
 import pefile
 import syntax
 
-dll_name = "tiny.dll"
+dll_name = "C:\\Users\\fishministrator\\Projects\\dllproxy\\original\\well_known_domains.dll"
 
 
 pe = pefile.PE(dll_name)
