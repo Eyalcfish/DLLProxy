@@ -4,7 +4,7 @@ import syntax
 dll_name = "tiny.dll"
 
 
-pe = pefile.PE("tiny.dll")
+pe = pefile.PE(dll_name)
 
 functionNames = []
 

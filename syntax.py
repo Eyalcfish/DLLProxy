@@ -31,6 +31,15 @@ total_size = 0
 for reg in registers_x64+registers_sse+register_rip: # We do not support avx/avx2/avx512 yet
     total_size += reg[1]
 
+clobbers = []
+for reg in registers_x64 + registers_sse:
+    if reg[0] in ("rsp", "rflags", "rip"):
+        continue
+    clobbers.append(f'"{reg[0]}"')
+clobbers.append('"cc"')
+clobbers.append('"memory"')
+clobber_list = ", ".join(clobbers)
+
 def createPrefix(functionNames):
     final = ""
     includes = f"#include <windows.h>\n\n"
@@ -81,6 +90,9 @@ void __attribute__((naked)) {functionName}() {{
 {load_registers}
         "jmp [reg_vals+{i}]\\n\\t"
         ".att_syntax prefix\\n\\t"
+        :
+        :
+        : {clobber_list}
     );
 }}\n"""
 
