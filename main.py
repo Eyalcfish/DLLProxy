@@ -15,14 +15,15 @@ if hasattr(pe, "DIRECTORY_ENTRY_EXPORT"):
 c_name = dll_name[0:dll_name.find('.')]
 c_name += ".c"
 
-print(syntax.createPrefix(functionNames))
-for name in functionNames:
-    print(syntax.createPreFunction(name))
-    print(syntax.createPostFunction(name))
-for name in functionNames:
-    print(syntax.createProxyFunction(name))
-print(syntax.createDLLMAIN(functionNames))
+total = ""
 
-# with open(c_name, "w", encoding="utf-8") as file:
-#     for name in functionNames:
-#         file.write(name)
+total += syntax.createPrefix(functionNames)
+for name in functionNames:
+    total += syntax.createPreFunction(name)
+    total += syntax.createPostFunction(name)
+for name in functionNames:
+    total += syntax.createProxyFunction(name)
+total += syntax.createDLLMAIN(functionNames)
+
+with open(c_name, "w", encoding="utf-8") as file:
+    file.write(total)
